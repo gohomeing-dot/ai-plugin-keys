@@ -3,62 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>激活码领取测试</title>
+    <title>AI 插件激活领码</title>
     <script src="https://cdn.staticfile.org/Bmob-JavaScript-SDK/2.2.5/Bmob-2.2.5.min.js"></script>
     <style>
-        body { background: #000; color: #fff; text-align: center; padding-top: 50px; font-family: sans-serif; }
-        .box { border: 1px solid #333; padding: 20px; display: inline-block; border-radius: 10px; }
-        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 18px; }
+        :root { --primary: #007aff; --bg: #050505; --card: #121212; }
+        body { background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid #222; text-align: center; width: 300px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        h2 { color: var(--primary); margin: 0 0 20px; font-style: italic; letter-spacing: 1px; }
+        #resBox { display: none; margin-bottom: 25px; padding: 20px; background: rgba(0,122,255,0.1); border: 1px dashed var(--primary); border-radius: 12px; }
+        #keyCode { font-family: 'Courier New', monospace; font-size: 24px; font-weight: bold; color: #fff; display: block; }
+        button { background: var(--primary); color: #fff; border: none; padding: 16px; border-radius: 14px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        button:hover { background: #0066d6; }
+        button:disabled { background: #333; color: #666; cursor: not-allowed; }
+        .footer { font-size: 10px; color: #444; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>AI 激活码领取</h2>
-        <p id="showCode" style="color: yellow; font-size: 20px;"></p>
-        <button id="btn">点我领取</button>
-    </div>
 
-    <script>
-        // 初始化提示
-        console.log("正在初始化 Bmob...");
-        try {
-            Bmob.initialize("a3723e1d0f8e2d614d9dc3450fdc14fd", "7f7f3fcf459c7da0fa06e6ca9b60c98c");
-            console.log("Bmob 初始化完成");
-        } catch(e) {
-            alert("初始化失败，请检查网络");
+<div class="card">
+    <h2>CYBER ZEN AI</h2>
+    <div id="resBox">
+        <span style="font-size: 10px; color: #888; margin-bottom: 8px; display: block;">您的激活码已就绪</span>
+        <span id="keyCode">----</span>
+    </div>
+    <button id="btn">立即领取激活码</button>
+    <div class="footer">仅供内部测试使用 · Bmob Cloud</div>
+</div>
+
+<script>
+    // 1. 初始化 (使用你提供的 Key)
+    Bmob.initialize("a3723e1d0f8e2d614d9dc3450fdc14fd", "7f7f3fcf459c7da0fa06e6ca9b60c98c");
+
+    const mainBtn = document.getElementById('btn');
+    const resBox = document.getElementById('resBox');
+    const codeDisplay = document.getElementById('keyCode');
+
+    mainBtn.onclick = async function() {
+        // 防止重复领取
+        const localKey = localStorage.getItem('my_claimed_key');
+        if (localKey) {
+            alert('您已经领过激活码了：' + localKey);
+            showKey(localKey);
+            return;
         }
 
-        document.getElementById('btn').onclick = async function() {
-            alert("【第 1 步】按钮已点击，开始连接数据库...");
-            
-            try {
-                const query = Bmob.Query("ActivationKeys");
-                query.equalTo("isClaimed", "==", false);
+        mainBtn.innerText = "正在安全连接...";
+        mainBtn.disabled = true;
+
+        try {
+            // 查询逻辑
+            const query = Bmob.Query("ActivationKeys");
+            query.equalTo("isClaimed", "==", false);
+            query.limit(1);
+            const results = await query.find();
+
+            if (results.length > 0) {
+                const target = results[0];
                 
-                alert("【第 2 步】正在查询有没有没领取的码...");
-                const res = await query.find();
+                // 更新标记
+                const updateTask = Bmob.Query("ActivationKeys");
+                updateTask.set("id", target.objectId);
+                updateTask.set("isClaimed", true);
+                await updateTask.save();
 
-                if (res.length > 0) {
-                    alert("【第 3 步】发现可用码：" + res[0].code + "，正在尝试修改它的状态...");
-                    const item = res[0];
-                    const update = Bmob.Query("ActivationKeys");
-                    update.set("id", item.objectId);
-                    update.set("isClaimed", true);
-                    await update.save();
-
-                    alert("【第 4 步】状态修改成功！");
-                    document.getElementById('showCode').innerText = "激活码：" + item.code;
-                    this.innerText = "领取成功";
-                    this.disabled = true;
-                } else {
-                    alert("【结果】表里没有没领取的码了（isClaimed 全是 true 或者表里没数据）");
-                }
-            } catch (err) {
-                // 如果在任何一步出错了，都会弹这个
-                alert("【报错了！】\n错误代码：" + err.code + "\n原因：" + err.error);
-                console.error(err);
+                // 存储并展示
+                localStorage.setItem('my_claimed_key', target.code);
+                showKey(target.code);
+                mainBtn.innerText = "领取成功";
+            } else {
+                alert("库存已售罄，请联系管理员补货。");
+                mainBtn.innerText = "已领完";
             }
-        };
-    </script>
+        } catch (err) {
+            console.error(err);
+            // 针对 Gitee 环境的报错处理
+            alert("请求失败！原因：" + (err.message || "Bmob 安全域名未放行此网址"));
+            mainBtn.disabled = false;
+            mainBtn.innerText = "重新尝试";
+        }
+    };
+
+    function showKey(val) {
+        codeDisplay.innerText = val;
+        resBox.style.display = 'block';
+    }
+</script>
+
 </body>
 </html>
