@@ -3,55 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 插件激活领码</title>
+    <title>AI 插件激活码领取中心</title>
     <script src="https://cdn.staticfile.org/Bmob-JavaScript-SDK/2.2.5/Bmob-2.2.5.min.js"></script>
     <style>
-        :root { --primary: #007aff; --bg: #050505; --card: #121212; }
-        body { background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid #222; text-align: center; width: 300px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        h2 { color: var(--primary); margin: 0 0 20px; font-style: italic; letter-spacing: 1px; }
-        #resBox { display: none; margin-bottom: 25px; padding: 20px; background: rgba(0,122,255,0.1); border: 1px dashed var(--primary); border-radius: 12px; }
-        #keyCode { font-family: 'Courier New', monospace; font-size: 24px; font-weight: bold; color: #fff; display: block; }
-        button { background: var(--primary); color: #fff; border: none; padding: 16px; border-radius: 14px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
-        button:hover { background: #0066d6; }
-        button:disabled { background: #333; color: #666; cursor: not-allowed; }
-        .footer { font-size: 10px; color: #444; margin-top: 20px; }
+        :root {
+            --primary: #007aff;
+            --bg: #050505;
+            --card-bg: #111111;
+            --text-main: #ffffff;
+            --text-dim: #888888;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: -apple-system, "SF Pro Display", "PingFang SC", sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 40px 30px;
+            border-radius: 28px;
+            border: 1px solid #222;
+            text-align: center;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            position: relative;
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            font-style: italic;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 30px;
+        }
+
+        /* 结果展示区 */
+        #resultBox {
+            display: none;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 122, 255, 0.05);
+            border: 1px dashed var(--primary);
+            border-radius: 16px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .label { font-size: 10px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px; }
+        #keyCode { font-family: "Monaco", "Courier New", monospace; font-size: 24px; font-weight: bold; color: #fff; letter-spacing: 1px; }
+
+        /* 按钮样式 */
+        #mainBtn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 16px 20px;
+            border-radius: 14px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 14px 0 rgba(0, 122, 255, 0.3);
+        }
+
+        #mainBtn:hover:not(:disabled) {
+            background: #0066d6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+        }
+
+        #mainBtn:active:not(:disabled) { transform: translateY(0); }
+
+        #mainBtn:disabled {
+            background: #222;
+            color: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .footer-tips { font-size: 10px; color: #333; margin-top: 25px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>CYBER ZEN AI</h2>
-    <div id="resBox">
-        <span style="font-size: 10px; color: #888; margin-bottom: 8px; display: block;">您的激活码已就绪</span>
+<div class="container">
+    <h1>CYBER ZEN AI</h1>
+    <p class="subtitle">3ds Max & SketchUp 插件激活中心</p>
+
+    <div id="resultBox">
+        <span class="label">Your Activation Key</span>
         <span id="keyCode">----</span>
     </div>
-    <button id="btn">立即领取激活码</button>
-    <div class="footer">仅供内部测试使用 · Bmob Cloud</div>
+
+    <button id="mainBtn">立即领取激活码</button>
+    
+    <div class="footer-tips" id="statusInfo">Bmob Cloud Service Online</div>
 </div>
 
 <script>
-    // 1. 初始化 (使用你提供的 Key)
+    // 1. 初始化 Bmob (确保使用你的 Application ID 和 REST API Key)
     Bmob.initialize("a3723e1d0f8e2d614d9dc3450fdc14fd", "7f7f3fcf459c7da0fa06e6ca9b60c98c");
 
-    const mainBtn = document.getElementById('btn');
-    const resBox = document.getElementById('resBox');
+    const btn = document.getElementById('mainBtn');
+    const resBox = document.getElementById('resultBox');
     const codeDisplay = document.getElementById('keyCode');
+    const statusInfo = document.getElementById('statusInfo');
 
-    mainBtn.onclick = async function() {
-        // 防止重复领取
-        const localKey = localStorage.getItem('my_claimed_key');
-        if (localKey) {
-            alert('您已经领过激活码了：' + localKey);
-            showKey(localKey);
+    // 2. 核心逻辑
+    btn.onclick = async function() {
+        // A. 本地查重：如果已经领过了，直接显示
+        const savedKey = localStorage.getItem('ai_plugin_key');
+        if (savedKey) {
+            alert('您之前已领过激活码，将为您直接展示。');
+            showResult(savedKey);
+            btn.innerText = "已领取";
             return;
         }
 
-        mainBtn.innerText = "正在安全连接...";
-        mainBtn.disabled = true;
+        // B. 开始请求
+        btn.disabled = true;
+        btn.innerText = "正在安全连接数据库...";
+        statusInfo.innerText = "Connecting to Bmob Cloud...";
 
         try {
-            // 查询逻辑
+            // 查询 ActivationKeys 表中未领取的码
             const query = Bmob.Query("ActivationKeys");
             query.equalTo("isClaimed", "==", false);
             query.limit(1);
@@ -60,31 +158,43 @@
             if (results.length > 0) {
                 const target = results[0];
                 
-                // 更新标记
+                // 立即更新该码的状态为“已领取”
                 const updateTask = Bmob.Query("ActivationKeys");
-                updateTask.set("id", target.objectId);
+                updateTask.set("id", target.objectId); // 必须是 objectId
                 updateTask.set("isClaimed", true);
                 await updateTask.save();
 
-                // 存储并展示
-                localStorage.setItem('my_claimed_key', target.code);
-                showKey(target.code);
-                mainBtn.innerText = "领取成功";
+                // 成功展示
+                const finalCode = target.code;
+                localStorage.setItem('ai_plugin_key', finalCode);
+                showResult(finalCode);
+                btn.innerText = "领取成功";
+                statusInfo.innerText = "Successfully claimed.";
             } else {
-                alert("库存已售罄，请联系管理员补货。");
-                mainBtn.innerText = "已领完";
+                alert("【补货通知】\n当前激活码已发放完毕，请联系开发者补充。");
+                btn.innerText = "暂时领完";
+                btn.disabled = false;
             }
         } catch (err) {
-            console.error(err);
-            // 针对 Gitee 环境的报错处理
-            alert("请求失败！原因：" + (err.message || "Bmob 安全域名未放行此网址"));
-            mainBtn.disabled = false;
-            mainBtn.innerText = "重新尝试";
+            console.error("完整错误对象:", err);
+            
+            // 解决 undefined 报错的核心逻辑
+            let errMsg = "未知错误";
+            if (err.code) {
+                errMsg = `错误码 ${err.code}: ${err.error}`;
+            } else {
+                errMsg = "网络连接被拦截 (CORS)。请确认 Bmob 后台已在'安全域名'填入 * 并保存。";
+            }
+
+            alert("请求失败！\n原因：" + errMsg);
+            btn.disabled = false;
+            btn.innerText = "重试领取";
+            statusInfo.innerText = "Connection Failed.";
         }
     };
 
-    function showKey(val) {
-        codeDisplay.innerText = val;
+    function showResult(code) {
+        codeDisplay.innerText = code;
         resBox.style.display = 'block';
     }
 </script>
