@@ -3,71 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>激活码领取-调试版</title>
+    <title>AI 插件激活码领取</title>
     <script src="https://cdn.staticfile.org/Bmob-JavaScript-SDK/2.2.5/Bmob-2.2.5.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white flex items-center justify-center min-h-screen">
-    <div class="p-8 bg-gray-900 rounded-3xl border border-gray-800 text-center max-w-sm w-full">
-        <h1 class="text-xl font-bold mb-6 italic">AI 插件激活码领取</h1>
-        <div id="resultBox" class="hidden mb-6 p-4 bg-blue-900/20 border border-blue-500 rounded-xl">
-            <span id="keyCode" class="text-xl font-mono text-blue-400">----</span>
+<body class="bg-[#050505] text-white flex items-center justify-center min-h-screen">
+
+    <div class="p-8 bg-gray-900/50 rounded-[2rem] border border-white/10 text-center max-w-sm w-full backdrop-blur-lg">
+        <h1 class="text-xl font-black mb-6 tracking-widest italic">CYBER ZEN AI</h1>
+        
+        <div id="resultBox" class="hidden mb-6 p-4 bg-blue-500/10 border border-dashed border-blue-500/50 rounded-xl">
+            <p class="text-[10px] text-blue-400 mb-2">您的激活码</p>
+            <span id="keyCode" class="text-2xl font-mono font-bold text-blue-400">----</span>
         </div>
-        <button id="mainBtn" class="w-full bg-blue-600 py-4 rounded-xl font-bold">点击领取</button>
-        <p id="statusText" class="mt-4 text-xs text-gray-500"></p>
+
+        <button id="mainBtn" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20">
+            随机领取激活码
+        </button>
+        
+        <p id="tip" class="mt-4 text-[10px] text-gray-500">提示：若点击无反应，请检查 Bmob 安全域名设置</p>
     </div>
 
     <script>
-        // 初始化检测
-        try {
-            Bmob.initialize("a3723e1d0f8e2d614d9dc3450fdc14fd", "7f7f3fcf459c7da0fa06e6ca9b60c98c");
-            console.log("Bmob 初始化成功");
-        } catch(e) {
-            alert("SDK 初始化失败，请检查网络！");
-        }
+        // 1. 初始化 Bmob
+        Bmob.initialize("a3723e1d0f8e2d614d9dc3450fdc14fd", "7f7f3fcf459c7da0fa06e6ca9b60c98c");
 
+        // 2. 绑定点击事件 (不依赖 onclick 属性)
         document.getElementById('mainBtn').addEventListener('click', async function() {
             const btn = this;
             const resBox = document.getElementById('resultBox');
             const codeTxt = document.getElementById('keyCode');
-            const status = document.getElementById('statusText');
 
-            alert("1. 按钮已触发！开始连接 Bmob...");
+            // 本地防重复
+            if (localStorage.getItem('my_key')) {
+                alert('您已经领过激活码了：' + localStorage.getItem('my_key'));
+                codeTxt.innerText = localStorage.getItem('my_key');
+                resBox.classList.remove('hidden');
+                return;
+            }
+
+            btn.innerText = "正在检索...";
             btn.disabled = true;
 
             try {
-                // 1. 查询
+                // 查询未领取的激活码
                 const query = Bmob.Query("ActivationKeys");
                 query.equalTo("isClaimed", "==", false);
                 query.limit(1);
-                
-                alert("2. 正在查询 ActivationKeys 表中未领取的码...");
                 const res = await query.find();
 
                 if (res.length > 0) {
                     const item = res[0];
-                    alert("3. 找到码了：" + item.code + "。正在更新状态...");
-
-                    // 2. 更新
+                    
+                    // 标记为已领取
                     const update = Bmob.Query("ActivationKeys");
                     update.set("id", item.objectId);
                     update.set("isClaimed", true);
                     await update.save();
 
-                    alert("4. 状态更新成功！准备显示在页面上。");
+                    // 展示结果
                     codeTxt.innerText = item.code;
                     resBox.classList.remove('hidden');
                     btn.innerText = "领取成功";
-                    localStorage.setItem('claimed_key', item.code);
+                    localStorage.setItem('my_key', item.code);
                 } else {
-                    alert("结果：没找到可领取的码。请检查 Bmob 表里是否有数据，且 isClaimed 是否为 false。");
-                    btn.disabled = false;
+                    alert('库存不足，请联系开发者补货！');
+                    btn.innerText = "已领完";
                 }
             } catch (err) {
-                // 这里是抓错的关键！
                 console.error(err);
-                alert("报错了！\n错误码：" + err.code + "\n信息：" + err.error + "\n\n排查建议：\n1. 检查 Bmob 安全域名是否设为 *\n2. 检查表名 ActivationKeys 是否拼对\n3. 检查字段 isClaimed 类型是否为 Boolean");
+                // 常见的错误提示
+                if(err.code === 101) alert("错误：Bmob 表名 ActivationKeys 拼写错误");
+                else if(err.code === 105) alert("错误：isClaimed 字段名或类型错误");
+                else alert("网络请求被拦截，请确认 Bmob 安全域名已设为 *");
+                
                 btn.disabled = false;
+                btn.innerText = "重试";
             }
         });
     </script>
